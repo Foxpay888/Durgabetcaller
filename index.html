@@ -5,7 +5,6 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-  <!-- ✅ XLSX LIBRARY -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -32,13 +31,21 @@
       backdrop-filter: blur(25px);
       border-radius: 20px;
       padding: 20px;
+      box-shadow: 
+        0 10px 40px rgba(0,0,0,0.6),
+        inset 0 0 10px rgba(255,255,255,0.1);
       text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 10px;
     }
 
     #number {
       font-size: 30px;
       margin: 12px 0;
       color: #00e5ff;
+      text-shadow: 0 0 10px #00e5ff;
     }
 
     input {
@@ -47,6 +54,7 @@
       margin: 6px 0;
       border-radius: 12px;
       border: none;
+      outline: none;
       font-size: 16px;
       background: rgba(255,255,255,0.1);
       color: white;
@@ -61,13 +69,23 @@
       font-weight: bold;
       cursor: pointer;
       color: white;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      box-shadow: 
+        0 6px 15px rgba(0,0,0,0.4),
+        inset 0 1px 2px rgba(255,255,255,0.2);
+      transition: 0.2s;
+    }
+
+    button:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 3px 8px rgba(0,0,0,0.6);
     }
 
     .green { background: linear-gradient(45deg,#00c853,#69f0ae); }
     .red { background: linear-gradient(45deg,#d50000,#ff5252); }
     .blue { background: linear-gradient(45deg,#2962ff,#82b1ff); }
     .gray { background: rgba(120,120,120,0.3); }
-    .yellow { background: linear-gradient(45deg,#ffab00,#ffd740); color:black; }
 
   </style>
 </head>
@@ -76,9 +94,9 @@
 
 <div class="container">
 
-  <h2> 📞DURGABET CALLING MANAGER</h2>
+  <h2>📞 Call Manager PRO</h2>
 
-  <div id="number">Load File</div>
+  <div id="number">Number</div>
 
   <input type="file" id="file">
 
@@ -89,94 +107,46 @@
 
   <br>
 
-  <button class="green" onclick="setFeedback('Interested')">Intrested</button>
+  <button class="green" onclick="setFeedback('Interested')">👍</button>
   <button class="red" onclick="setFeedback('Not Interested')">❌</button>
 
   <br>
 
-  <button class="gray" onclick="prev()">⏮ Prev</button>
   <button class="gray" onclick="start()">Start</button>
-  <button class="gray" onclick="next()">Next ⏭</button>
-
-  <br>
-
   <button class="green" onclick="callNow()">📞 Call</button>
   <button class="blue" onclick="waNow()">💬 WhatsApp</button>
-
-  <br>
-
-  <button class="yellow" onclick="addDate()">📅 Add Date</button>
 
 </div>
 
 <script>
+let numbers = [];
+let index = 0;
+let connectedSheet = "";
 
-// STORAGE
-let numbers = JSON.parse(localStorage.getItem("numbers")) || [];
-let index = parseInt(localStorage.getItem("index")) || 0;
-let connectedSheet = localStorage.getItem("sheet") || "";
-
-// 📂 FILE LOAD (FIXED XLSX)
 document.getElementById('file').addEventListener('change', function(e){
-  let file = e.target.files[0];
+  let reader = new FileReader();
+  reader.onload = function(e){
+    numbers = e.target.result
+      .split(/\r?\n|,|\s+/)
+      .filter(n => n.length > 5)
+      .map(n => "+91" + n.replace(/\D/g,""));
 
-  if(file.name.endsWith(".xlsx")){
-    let reader = new FileReader();
-    reader.onload = function(e){
-      let data = new Uint8Array(e.target.result);
-      let workbook = XLSX.read(data, {type: 'array'});
-      let sheet = workbook.Sheets[workbook.SheetNames[0]];
-      let json = XLSX.utils.sheet_to_json(sheet, {header:1});
-
-      numbers = [];
-
-      json.forEach(row => {
-        row.forEach(cell => {
-          let num = String(cell).replace(/\D/g,'');
-          if(num.length >= 10){
-            numbers.push("+91" + num.slice(-10));
-          }
-        });
-      });
-
-      saveNumbers();
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    // normal text file
-    let reader = new FileReader();
-    reader.onload = function(e){
-      numbers = e.target.result
-        .split(/\r?\n|,|\s+/)
-        .filter(n => n.length > 5)
-        .map(n => "+91" + n.replace(/\D/g,""));
-      saveNumbers();
-    };
-    reader.readAsText(file);
-  }
+    alert("Loaded " + numbers.length + " numbers");
+  };
+  reader.readAsText(e.target.files[0]);
 });
 
-function saveNumbers(){
-  localStorage.setItem("numbers", JSON.stringify(numbers));
-  localStorage.setItem("index", 0);
-  index = 0;
-  alert("Loaded " + numbers.length + " numbers");
-  show();
-}
-
-// SHEET CONNECT
 function connectSheet(){
   connectedSheet = document.getElementById("sheetLink").value;
-  localStorage.setItem("sheet", connectedSheet);
   alert("Connected ✅");
 }
 
-// SHOW
+function start(){
+  index = 0;
+  show();
+}
+
 function show(){
-  if(numbers.length === 0){
-    document.getElementById("number").innerText = "Load File First";
-    return;
-  }
   if(index >= numbers.length){
     document.getElementById("number").innerText = "Done ✅";
     return;
@@ -184,29 +154,6 @@ function show(){
   document.getElementById("number").innerText = numbers[index];
 }
 
-// NAVIGATION
-function next(){
-  if(index < numbers.length - 1){
-    index++;
-    localStorage.setItem("index", index);
-    show();
-  }
-}
-
-function prev(){
-  if(index > 0){
-    index--;
-    localStorage.setItem("index", index);
-    show();
-  }
-}
-
-// START
-function start(){
-  show();
-}
-
-// CALL / WA
 function callNow(){
   if(numbers[index]) location.href = "tel:" + numbers[index];
 }
@@ -215,13 +162,11 @@ function waNow(){
   if(numbers[index]) location.href = "https://wa.me/" + numbers[index].replace("+","");
 }
 
-// FEEDBACK
 function setFeedback(type){
   document.getElementById("feedback").value = type;
   saveData();
 }
 
-// SAVE
 function saveData(){
   let feedback = document.getElementById("feedback").value;
   let mobile = numbers[index];
@@ -231,7 +176,7 @@ function saveData(){
   let time = now.toLocaleTimeString();
 
   var xhr = new XMLHttpRequest();
-  xhr.open("POST", "YOUR_SCRIPT_URL_HERE");
+  xhr.open("POST", "https://script.google.com/macros/s/AKfycbwHzy2fO5HPaRMvjO4oP4QtYiCFFCABxohNDTdtx7ALqCC9VHBPzs9ruvNPI9VLXQqzqg/exec");
 
   xhr.send(JSON.stringify({
     sheetUrl: connectedSheet,
@@ -241,35 +186,9 @@ function saveData(){
     time: time
   }));
 
-  next();
+  index++;
+  show();
 }
-
-// DATE BUTTON
-function addDate(){
-  let now = new Date();
-  let date = now.toLocaleDateString("en-GB");
-
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "YOUR_SCRIPT_URL_HERE");
-
-  xhr.send(JSON.stringify({
-    sheetUrl: connectedSheet,
-    mobile: "---- DATE ----",
-    feedback: "",
-    date: date,
-    time: ""
-  }));
-
-  alert("Date Added ✅");
-}
-
-// AUTO RESUME
-window.onload = function(){
-  if(numbers.length > 0){
-    show();
-  }
-};
-
 </script>
 
 </body>
