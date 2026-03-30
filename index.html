@@ -90,6 +90,12 @@
     .gray { background: rgba(120,120,120,0.3); }
     .yellow { background: linear-gradient(45deg,#ffab00,#ffd740); color:black; }
 
+    #fileName {
+      font-size: 14px;
+      color: #00e5ff;
+      margin-bottom: 8px;
+    }
+
   </style>
 </head>
 
@@ -107,15 +113,19 @@
   </div>
 
   <input type="file" id="file">
+  <div id="fileName">📄 No file selected</div>
 
   <input type="text" id="sheetLink" placeholder="Google Sheet Link">
   <button class="blue" onclick="connectSheet()">🔗 Connect</button>
+
+  <input type="number" id="jumpIndex" placeholder="Go to number (e.g. 52)">
+  <button class="blue" onclick="jumpTo()">➡️ Go</button>
 
   <input type="text" id="feedback" placeholder="Enter feedback">
 
   <br>
 
-  <button class="green" onclick="setFeedback('Interested')">Intreseted</button>
+  <button class="green" onclick="setFeedback('Interested')">Interested</button>
   <button class="red" onclick="setFeedback('Not Interested')">❌</button>
 
   <br>
@@ -144,6 +154,9 @@ let connectedSheet = localStorage.getItem("sheet") || "";
 // FILE LOAD
 document.getElementById('file').addEventListener('change', function(e){
   let file = e.target.files[0];
+
+  // ✅ SHOW FILE NAME
+  document.getElementById("fileName").innerText = "📄 " + file.name;
 
   let reader = new FileReader();
   reader.onload = function(e){
@@ -245,10 +258,11 @@ function prev(){
 
 function start(){ show(); }
 
+// CALL & WHATSAPP
 function callNow(){ if(numbers[index]) location.href = "tel:" + numbers[index]; }
-
 function waNow(){ if(numbers[index]) location.href = "https://wa.me/" + numbers[index].replace("+",""); }
 
+// FEEDBACK
 function setFeedback(type){
   document.getElementById("feedback").value = type;
   saveData();
@@ -277,7 +291,7 @@ function saveData(){
   next();
 }
 
-// DATE
+// ADD DATE
 function addDate(){
   let now = new Date();
   let date = now.toLocaleDateString("en-GB");
@@ -295,6 +309,31 @@ function addDate(){
 
   alert("Date Added ✅");
 }
+
+// JUMP
+function jumpTo(){
+  let val = parseInt(document.getElementById("jumpIndex").value);
+
+  if(isNaN(val)){
+    alert("Enter valid number");
+    return;
+  }
+
+  if(val < 1 || val > numbers.length){
+    alert("Out of range!");
+    return;
+  }
+
+  index = val - 1;
+  localStorage.setItem("index", index);
+  show();
+}
+
+document.getElementById("jumpIndex").addEventListener("keypress", function(e){
+  if(e.key === "Enter"){
+    jumpTo();
+  }
+});
 
 // AUTO LOAD
 window.onload = function(){
